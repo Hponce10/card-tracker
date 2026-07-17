@@ -267,6 +267,23 @@ t = t.replace("""  } else if(t.dataset.own){""",
     return;
   } else if(t.dataset.own){""")
 
+# --- 12. backups carry the sync identity so another device joins the same cloud collection ---
+t = t.replace('return JSON.stringify({app:"goodra-tracker", v:2, exported:new Date().toISOString().slice(0,10), owned}, null, 1);',
+"""const ids = idKeys();
+  return JSON.stringify({app:"goodra-tracker", v:2, exported:new Date().toISOString().slice(0,10), owned,
+    sync:{sid:ids.sid, ekey:ids.ekey, name:localStorage.getItem("ct.name")||null}}, null, 1);""")
+t = t.replace("""  if(mode==="replace") owned = map;
+  else Object.assign(owned, map);
+  save(); refreshHeader(); renderCollection();""",
+"""  if(mode==="replace") owned = map;
+  else Object.assign(owned, map);
+  if(parsed.sync && parsed.sync.sid && parsed.sync.ekey){
+    localStorage.setItem("ct.shareId", parsed.sync.sid);
+    localStorage.setItem("ct.editKey", parsed.sync.ekey);
+    if(parsed.sync.name) localStorage.setItem("ct.name", parsed.sync.name);
+  }
+  save(); refreshHeader(); renderCollection();""")
+
 # --- date + entity-encode ---
 import datetime
 t = t.replace("__UPDATED__", datetime.date.today().strftime("%B %-d, %Y"))

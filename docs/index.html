@@ -790,7 +790,9 @@ function openModal(id){
 
 /* ---------- backup / restore ---------- */
 function exportPayload(){
-  return JSON.stringify({app:"goodra-tracker", v:2, exported:new Date().toISOString().slice(0,10), owned}, null, 1);
+  const ids = idKeys();
+  return JSON.stringify({app:"goodra-tracker", v:2, exported:new Date().toISOString().slice(0,10), owned,
+    sync:{sid:ids.sid, ekey:ids.ekey, name:localStorage.getItem("ct.name")||null}}, null, 1);
 }
 function validateOwned(obj){
   if(typeof obj!=="object"||obj===null||Array.isArray(obj)) return null;
@@ -824,6 +826,11 @@ function doImport(mode){
   const n = Object.keys(map).length;
   if(mode==="replace") owned = map;
   else Object.assign(owned, map);
+  if(parsed.sync && parsed.sync.sid && parsed.sync.ekey){
+    localStorage.setItem("ct.shareId", parsed.sync.sid);
+    localStorage.setItem("ct.editKey", parsed.sync.ekey);
+    if(parsed.sync.name) localStorage.setItem("ct.name", parsed.sync.name);
+  }
   save(); refreshHeader(); renderCollection();
   bkMsg((mode==="replace"?"Replaced collection with ":"Merged in ")+n+" variant"+(n===1?"":"s")+". Saved.", true);
 }
