@@ -991,13 +991,21 @@ async function pushCollection(){
   }catch(e){ syncState("offline &#8212; saved in this browser only", false); }
 }
 const _save = save0 => () => { save0(); schedulePush(); };
+async function fetchSpeciesPrices(q, tries){
+  for(let i=0;i<tries;i++){
+    try{
+      const r = await fetch(`https://api.pokemontcg.io/v2/cards?q=name:*${q}*&pageSize=250&select=id,tcgplayer,cardmarket`,
+        {signal: AbortSignal.timeout(12000)});
+      if(r.ok) return (await r.json()).data || [];
+    }catch(e){ /* retry */ }
+  }
+  return [];
+}
 async function applyLiveOverlay(){
   try{
-    const res = await Promise.all(["goodra","dragonite"].map(q =>
-      fetch(`https://api.pokemontcg.io/v2/cards?q=name:*${q}*&pageSize=250&select=id,tcgplayer,cardmarket`,
-        {signal: AbortSignal.timeout(9000)}).then(r=>r.json())));
+    const res = await Promise.all(["goodra","dragonite"].map(q => fetchSpeciesPrices(q, 2)));
     const ix = {};
-    res.flatMap(r=>r.data||[]).forEach(c=>ix[c.id]=c);
+    res.flat().forEach(c=>ix[c.id]=c);
     const today = new Date().toISOString().slice(0,10).replace(/-/g,"/");
     let n = 0;
     DATA.cards.forEach(c=>{
@@ -1065,11 +1073,18 @@ async function boot(){
     }catch(e){ syncState("offline &#8212; saved in this browser only", false); }
   }
 
-  await overlayP;
+  // render immediately with baked prices; live overlay re-renders when it lands
   rebuildVariants();
-  if(!READONLY) portHist = recordPortfolio();
   if(!READONLY) checkNewCards();
   renderSpecies(); refreshHeader(); renderCollection();
+  overlayP.then(()=>{
+    if(!LIVE) return;
+    if(!READONLY) portHist = recordPortfolio();
+    refreshHeader();
+    const visible = ["collection","market","showcase","binder"].find(s=>!$("#"+s).hidden);
+    ({collection:renderCollection, market:renderMarket, showcase:renderShowcase, binder:renderBinder})[visible]();
+  });
+  if(!READONLY && !LIVE) portHist = recordPortfolio();
 }
 boot();
 </script>
