@@ -19,9 +19,13 @@ def sets_match(a,b):
     na, nb = norm_set(a), norm_set(b)
     return na==nb or na in nb or nb in na
 
+from species_config import SPECIES as SPECIES_CFG
 api = {}
-for sp in ('goodra','dragonite'):
-    for c in json.load(open(os.path.join(here,f'{sp}_refresh.json')))['data']:
+for s in SPECIES_CFG:
+    sp = s['key']
+    path = os.path.join(here, f'{sp}_refresh.json')
+    if not os.path.exists(path): continue
+    for c in json.load(open(path))['data']:
         api.setdefault(sp,[]).append(c)
 
 def variant_price_key(v, tp_keys):

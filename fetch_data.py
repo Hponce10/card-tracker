@@ -74,9 +74,11 @@ def variant_price_key(v, tp_keys):
             if c in tp_keys: return c
     return None
 
+from species_config import SPECIES as SPECIES_CFG
 d = json.load(open(os.path.join(here,'goodra_data.json')))
 api_cards = {}
-for sp, q in (('goodra','goodra'), ('dragonite','dragonite')):
+for s in SPECIES_CFG:
+    sp, q = s['key'], s['query']
     for c in fetch(q, os.path.join(here,f'{sp}_refresh.json')):
         api_cards.setdefault(sp, {})[c['id']] = c
 
