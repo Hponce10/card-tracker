@@ -1,0 +1,10 @@
+img/
+img_dr/
+img_new/
+*.b64
+*.xlsx
+*_refresh.json
+goodra.json
+dragonite.json
+goodra-tracker.html
+web/

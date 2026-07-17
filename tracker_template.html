@@ -1,0 +1,909 @@
+<title>Goodra Collection Tracker</title>
+<style>
+:root{
+  --bg:#f7f5fb; --surface:#ffffff; --surface2:#efeaf7; --line:#ddd4ec;
+  --ink:#241b33; --ink2:#5c5170; --ink3:#8d81a3;
+  --accent:#8b5fd0; --accent-ink:#6a3fb0; --accent-soft:#ece3fa;
+  --own:#4e8f27; --own-soft:#e7f3da;
+  --gain:#2f9e63; --loss:#d95757; --gold:#b8860b; --gold-soft:#f6ecd4;
+  --shadow:0 1px 3px rgba(36,27,51,.08),0 4px 16px rgba(36,27,51,.06);
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#161221; --surface:#211b30; --surface2:#2b2440; --line:#3a3153;
+  --ink:#efeaf9; --ink2:#b5a9cd; --ink3:#867a9e;
+  --accent:#b79bee; --accent-ink:#c9b4f5; --accent-soft:#332a4d;
+  --own:#a4d872; --own-soft:#2c3a20;
+  --gain:#5ec98f; --loss:#ef8080; --gold:#e0b64f; --gold-soft:#3d3319;
+  --shadow:0 1px 3px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
+}}
+:root[data-theme="light"]{
+  --bg:#f7f5fb; --surface:#ffffff; --surface2:#efeaf7; --line:#ddd4ec;
+  --ink:#241b33; --ink2:#5c5170; --ink3:#8d81a3;
+  --accent:#8b5fd0; --accent-ink:#6a3fb0; --accent-soft:#ece3fa;
+  --own:#4e8f27; --own-soft:#e7f3da;
+  --gain:#2f9e63; --loss:#d95757; --gold:#b8860b; --gold-soft:#f6ecd4;
+  --shadow:0 1px 3px rgba(36,27,51,.08),0 4px 16px rgba(36,27,51,.06);
+}
+:root[data-theme="dark"]{
+  --bg:#161221; --surface:#211b30; --surface2:#2b2440; --line:#3a3153;
+  --ink:#efeaf9; --ink2:#b5a9cd; --ink3:#867a9e;
+  --accent:#b79bee; --accent-ink:#c9b4f5; --accent-soft:#332a4d;
+  --own:#a4d872; --own-soft:#2c3a20;
+  --gain:#5ec98f; --loss:#ef8080; --gold:#e0b64f; --gold-soft:#3d3319;
+  --shadow:0 1px 3px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;line-height:1.5}
+h1,h2,h3,.disp{font-family:ui-rounded,"SF Pro Rounded",system-ui,sans-serif}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--accent-ink)}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px 80px}
+
+/* header */
+header{padding:28px 0 14px}
+.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--ink3);font-weight:600}
+h1{margin:2px 0 4px;font-size:clamp(26px,5vw,38px);letter-spacing:-.01em;text-wrap:balance}
+h1 .goo{color:var(--accent)}
+.sub{color:var(--ink2);font-size:14px;margin:0}
+.headrow{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.ring{--pct:0;width:86px;height:86px;border-radius:50%;flex:none;
+  background:conic-gradient(var(--own) calc(var(--pct)*1%),var(--surface2) 0);
+  display:grid;place-items:center;position:relative}
+.ring::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--bg)}
+.ring span{position:relative;z-index:1;font-weight:700;font-size:16px}
+.ring small{position:relative;z-index:1;display:block;text-align:center;font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em}
+.ringbox{display:flex;align-items:center;gap:14px}
+.ringlbl{font-size:12px;color:var(--ink2);max-width:150px}
+.species{display:flex;gap:6px;margin-top:12px}
+.species button{border:1px solid var(--line);background:var(--surface);color:var(--ink2);
+  padding:5px 16px;border-radius:999px;font-weight:700;font-size:13px}
+.species button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .species button.on{color:#1d1430}
+.est{color:var(--ink3);font-weight:400}
+
+/* tabs */
+nav{position:sticky;top:0;z-index:20;background:var(--bg);padding:10px 0;display:flex;gap:8px;border-bottom:1px solid var(--line)}
+nav button{border:1px solid var(--line);background:var(--surface);color:var(--ink2);
+  padding:8px 18px;border-radius:999px;font-weight:600;font-size:14px}
+nav button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] nav button.on, .darkq nav button.on{color:#1d1430}
+main{padding-top:22px}
+section[hidden]{display:none}
+
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:22px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+.tile .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);font-weight:600}
+.tile .val{font-size:26px;font-weight:700;margin-top:2px}
+.tile .det{font-size:12px;color:var(--ink2);margin-top:2px}
+.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.chip.up{background:color-mix(in srgb,var(--gain) 15%,transparent);color:var(--gain)}
+.chip.dn{background:color-mix(in srgb,var(--loss) 15%,transparent);color:var(--loss)}
+.chip.flat{background:var(--surface2);color:var(--ink3)}
+.spark{vertical-align:middle}
+
+/* era + rows */
+.era{margin:26px 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.era h2{font-size:16px;margin:0;color:var(--accent-ink)}
+.era .cnt{font-size:12px;color:var(--ink3)}
+.row{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;
+  display:grid;grid-template-columns:auto 56px 1fr auto auto;gap:12px;align-items:center;margin-bottom:8px}
+.row.owned{border-color:color-mix(in srgb,var(--own) 45%,var(--line));background:color-mix(in srgb,var(--own-soft) 40%,var(--surface))}
+.row .thumb{width:56px;height:78px;border-radius:5px;object-fit:cover;background:var(--surface2);cursor:zoom-in}
+.row .thumb.ph{display:grid;place-items:center;font-size:20px}
+.cardname{font-weight:650;font-size:14.5px}
+.cardmeta{font-size:12px;color:var(--ink2)}
+.badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;padding:1px 7px;border-radius:5px;margin-left:6px;vertical-align:1px}
+.badge.jp{background:var(--accent-soft);color:var(--accent-ink)}
+.badge.grail{background:var(--gold-soft);color:var(--gold)}
+.badge.gr{background:var(--gold-soft);color:var(--gold)}
+.badge.cond{background:var(--surface2);color:var(--ink2)}
+.editor label.ck{flex-direction:row;align-items:center;gap:6px}
+.editor input[type="checkbox"]{min-width:0;width:16px;height:16px;accent-color:var(--accent)}
+.badge.chase{background:var(--accent-soft);color:var(--accent-ink)}
+.price{font-weight:650;font-size:14px;text-align:right}
+.price small{display:block;font-weight:400;font-size:11px;color:var(--ink3)}
+.ownbtn{width:34px;height:34px;border-radius:9px;border:2px solid var(--line);background:var(--surface);
+  color:transparent;font-size:18px;line-height:1;flex:none}
+.ownbtn.on{background:var(--own);border-color:var(--own);color:#fff}
+:root[data-theme="dark"] .ownbtn.on{color:#182310}
+.qty{display:flex;align-items:center;gap:6px;font-size:13px}
+.qty button{width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);padding:0}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.filters button{border:1px solid var(--line);background:var(--surface);color:var(--ink2);padding:5px 14px;border-radius:999px;font-size:13px;font-weight:600}
+.filters button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.filters input[type="search"],.filters select{font:inherit;font-size:13px;background:var(--surface);color:var(--ink);
+  border:1px solid var(--line);border-radius:999px;padding:5px 14px}
+.filters input[type="search"]{flex:1;min-width:150px}
+.filters input[type="search"]:focus,.filters select:focus{outline:2px solid var(--accent);outline-offset:0}
+.findlink{font-size:12px;white-space:nowrap}
+.editbtn{border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px}
+.editbtn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.editor{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:-4px 0 8px;
+  display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink2)}
+.editor label{display:flex;flex-direction:column;gap:3px;font-weight:600}
+.editor input,.editor select{font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px 8px;min-width:110px}
+.editor input:focus,.editor select:focus{outline:2px solid var(--accent);outline-offset:0}
+.priobtn{border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.priobtn.pr-grail{background:var(--gold-soft);border-color:var(--gold);color:var(--gold)}
+.priobtn.pr-high{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.priobtn.pr-skip{opacity:.55;text-decoration:line-through}
+.planner{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:18px;box-shadow:var(--shadow)}
+.planhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+#budgetIn{font:inherit;width:90px;background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+.plan-item{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line);font-size:13px}
+.plan-item:first-child{border-top:none}
+.deal-item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:13px;flex-wrap:wrap}
+.deal-item:first-child{border-top:none}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.mbadge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:650;
+  border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--surface);color:var(--ink2)}
+.mbadge.earned{background:var(--own-soft);border-color:var(--own);color:var(--own)}
+.mbadge:not(.earned){opacity:.55}
+.mbadge .ico{font-size:13px}
+.newbanner{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;
+  font-size:13.5px;color:var(--accent-ink);margin-bottom:12px}
+.progress{height:8px;border-radius:999px;background:var(--surface2);overflow:hidden;margin:8px 0 18px}
+.progress i{display:block;height:100%;background:var(--own);border-radius:999px}
+
+/* market table */
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.tablewrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line)}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface2)}
+td{padding:9px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.ownd{color:var(--own);font-weight:700}
+
+/* chart */
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);margin-bottom:22px}
+.chart h3{margin:0 0 4px;font-size:15px}
+.chart .note{font-size:12px;color:var(--ink3);margin:0 0 14px}
+.bar{display:grid;grid-template-columns:190px 1fr 64px;gap:10px;align-items:center;margin-bottom:7px;font-size:12.5px}
+.bar .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2)}
+.bar .t{height:14px;border-radius:0 4px 4px 0;background:var(--accent);min-width:2px}
+.bar.own .t{background:var(--own)}
+.bar .v{font-weight:650;text-align:right}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink2);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* showcase */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow);
+  cursor:pointer;transition:transform .15s ease;position:relative}
+.gcard:hover{transform:translateY(-3px)}
+.gcard img{width:100%;border-radius:8px;display:block}
+.gcard .ph{width:100%;aspect-ratio:245/342;border-radius:8px;background:linear-gradient(160deg,var(--accent-soft),var(--surface2));
+  display:grid;place-items:center;text-align:center;color:var(--accent-ink);font-weight:700;font-size:13px;padding:10px}
+.gcard .gn{font-weight:650;font-size:13.5px;margin-top:8px}
+.gcard .gm{font-size:11.5px;color:var(--ink2)}
+.vchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.vchip{font-size:10px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--surface2);color:var(--ink2)}
+.vchip.have{background:var(--own-soft);color:var(--own)}
+.owntag{position:absolute;top:8px;left:8px;background:var(--own);color:#fff;font-size:10px;font-weight:800;
+  padding:2px 8px;border-radius:999px;letter-spacing:.05em}
+:root[data-theme="dark"] .owntag{color:#182310}
+
+/* modal */
+dialog{border:none;border-radius:18px;background:var(--surface);color:var(--ink);max-width:640px;width:calc(100vw - 40px);
+  padding:0;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(20,12,35,.55);backdrop-filter:blur(3px)}
+.mbody{display:grid;grid-template-columns:200px 1fr;gap:18px;padding:20px}
+.mbody img{width:100%;border-radius:10px}
+.mclose{position:absolute;top:10px;right:12px;border:none;background:var(--surface2);color:var(--ink2);
+  width:30px;height:30px;border-radius:50%;font-size:15px}
+.mvar{border-top:1px solid var(--line);padding:8px 0;display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px}
+.mvar:first-of-type{border-top:none}
+.buy{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.buy a{font-size:12.5px;font-weight:600;text-decoration:none;border:1px solid var(--accent);color:var(--accent-ink);
+  padding:6px 12px;border-radius:999px}
+.buy a.solid{background:var(--accent);color:#fff}
+:root[data-theme="dark"] .buy a.solid{color:#1d1430}
+.mnote{font-size:12px;color:var(--ink2);background:var(--surface2);border-radius:8px;padding:8px 10px;margin-top:10px}
+.foot{font-size:11.5px;color:var(--ink3);margin-top:36px;border-top:1px solid var(--line);padding-top:12px}
+.bkbody{padding:20px;position:relative}
+#bkText{width:100%;font:12px ui-monospace,monospace;background:var(--surface2);color:var(--ink);
+  border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+#bkMsg.ok{color:var(--gain)} #bkMsg.err{color:var(--loss)}
+@media (max-width:640px){
+  .row{grid-template-columns:auto 44px 1fr;grid-auto-rows:auto}
+  .row .price{grid-column:3;text-align:left}
+  .row .side{grid-column:2/4}
+  .mbody{grid-template-columns:1fr}
+  .mbody img{max-width:220px;margin:0 auto}
+  .bar{grid-template-columns:110px 1fr 56px}
+}
+@media (prefers-reduced-motion: reduce){.gcard{transition:none}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="headrow">
+    <div>
+      <div class="eyebrow" id="eyebrow">Card Tracker &middot; #706</div>
+      <h1 id="pageTitle">The <span class="goo">Goodra</span> Collection</h1>
+      <p class="sub" id="pageSub">Every Goodra printing on the market — what you own, what it's worth, what's still out there.</p>
+      <div class="species" id="speciesSwitch"></div>
+    </div>
+    <div class="ringbox">
+      <div class="ring" id="ring"><div><span id="ringPct">0%</span><small id="ringCnt">0 / 0</small></div></div>
+      <div class="ringlbl" id="ringLbl">of all known Goodra variants collected</div>
+    </div>
+  </div>
+</header>
+
+<div id="newBanner" class="newbanner" hidden>
+  <div><b>New cards sighted!</b> <span id="newList"></span></div>
+  <button data-act="dismissnew" class="editbtn">Got it</button>
+</div>
+
+<nav id="tabs">
+  <button data-tab="collection" class="on">Collection</button>
+  <button data-tab="market">Market</button>
+  <button data-tab="showcase">Showcase</button>
+  <button data-tab="binder">Trade binder</button>
+</nav>
+
+<main>
+<section id="collection">
+  <div class="tiles">
+    <div class="tile"><div class="lbl">Owned</div><div class="val num" id="cOwned">0</div><div class="det" id="cOwnedDet"></div></div>
+    <div class="tile"><div class="lbl">Missing</div><div class="val num" id="cMissing">0</div><div class="det">variants still to hunt</div></div>
+    <div class="tile"><div class="lbl">Cost to complete</div><div class="val num" id="cCost">$0</div><div class="det">market price of priced missing variants</div></div>
+  </div>
+  <div class="filters" style="justify-content:flex-end;margin-bottom:2px">
+    <button data-act="backup" title="Export or restore your collection">⇅ Backup / restore</button>
+  </div>
+  <div class="filters" id="colFilters">
+    <button data-f="all" class="on">All</button>
+    <button data-f="owned">I have</button>
+    <button data-f="missing">Still need</button>
+    <button data-f="en">English</button>
+    <button data-f="jp">Japanese</button>
+    <input type="search" id="colSearch" placeholder="Search name, set, rarity…" aria-label="Search cards">
+    <select id="colSort" aria-label="Sort order">
+      <option value="era">By era (default)</option>
+      <option value="valdesc">Value: high → low</option>
+      <option value="valasc">Value: low → high</option>
+      <option value="new">Newest first</option>
+      <option value="name">Name A–Z</option>
+    </select>
+  </div>
+  <div class="progress"><i id="progBar" style="width:0%"></i></div>
+  <div id="badges" class="badges"></div>
+  <div class="planner" id="planner">
+    <div class="planhead">
+      <h3 class="disp" style="margin:0;font-size:15px">Next pickups</h3>
+      <label class="cardmeta" style="display:flex;align-items:center;gap:6px">Budget
+        <input type="number" id="budgetIn" min="0" step="5" placeholder="50" aria-label="Budget in dollars"></label>
+    </div>
+    <div id="planList" class="cardmeta"></div>
+  </div>
+  <div id="colList"></div>
+</section>
+
+<section id="market" hidden>
+  <div class="tiles">
+    <div class="tile"><div class="lbl">Portfolio value</div><div class="val num" id="mPort">$0</div><div class="det" id="mPortChg"></div></div>
+    <div class="tile"><div class="lbl">Cost basis</div><div class="val num" id="mBasis">$0</div><div class="det" id="mBasisDet"></div></div>
+    <div class="tile"><div class="lbl">Unrealized P/L</div><div class="val num" id="mPL">$0</div><div class="det" id="mPLDet"></div></div>
+    <div class="tile"><div class="lbl">Full-set market value</div><div class="val num" id="mTotal">$0</div><div class="det">all priced variants, 1× each</div></div>
+    <div class="tile"><div class="lbl">Top gainer (7d)</div><div class="val" id="mGain" style="font-size:16px">—</div><div class="det" id="mGainDet"></div></div>
+    <div class="tile"><div class="lbl">Top slider (7d)</div><div class="val" id="mLoss" style="font-size:16px">—</div><div class="det" id="mLossDet"></div></div>
+  </div>
+
+  <div class="chart">
+    <h3>Market value by variant</h3>
+    <p class="note">TCGplayer market price (USD), Japanese cards via Pokellector listings. Updated __UPDATED__.</p>
+    <div id="valueBars"></div>
+    <div class="legend"><span><i style="background:var(--own)"></i>In your collection</span><span><i style="background:var(--accent)"></i>Not owned yet</span></div>
+  </div>
+
+  <div class="chart" id="dealBox">
+    <h3>Deal watch</h3>
+    <p class="note">Cards you're missing where the cheapest TCGplayer listing sits well under market price. Verify condition before buying — big spreads often mean played copies.</p>
+    <div id="dealList"></div>
+  </div>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Card</th><th>Variant</th><th class="r">Market</th><th class="r">Your P/L</th><th class="r">Trend</th><th class="r">7d</th><th class="r">30d</th><th class="r">Find it</th></tr></thead>
+    <tbody id="mRows"></tbody>
+  </table></div>
+  <p class="foot">Prices: TCGplayer market (USD) via the Pokémon TCG API, updated __UPDATED__. Daily/weekly/monthly changes computed from Cardmarket 1/7/30-day sale averages (EUR-based trend, shown as %). Unpriced variants (new promos, theme-deck exclusives) show “—”.</p>
+</section>
+
+<section id="showcase" hidden>
+  <div class="filters"><input type="search" id="scSearch" placeholder="Search name, set, rarity…" aria-label="Search showcase"></div>
+  <div id="galWrap"></div>
+</section>
+
+<section id="binder" hidden>
+  <div class="tiles">
+    <div class="tile"><div class="lbl">Spare cards</div><div class="val num" id="bCount">0</div><div class="det">copies beyond the first of each variant</div></div>
+    <div class="tile"><div class="lbl">Trade binder value</div><div class="val num" id="bValue">$0</div><div class="det">market price of spares</div></div>
+  </div>
+  <p class="sub" style="margin:0 0 14px">Duplicates available for trade or sale — anything you own more than once. Bump quantities with the +/− stepper in Collection.</p>
+  <div id="bList"></div>
+</section>
+</main>
+
+<div class="foot">Built from the Pokémon TCG API + Pokellector · modeled on the Dragonite tracker · collection saved in this browser (localStorage).</div>
+</div>
+
+<dialog id="modal"><button class="mclose" id="mCloseBtn" aria-label="Close">✕</button><div id="mContent"></div></dialog>
+
+<dialog id="bkModal"><button class="mclose" id="bkCloseBtn" aria-label="Close">✕</button>
+  <div class="bkbody">
+    <h3 class="disp" style="margin:0">Backup &amp; restore</h3>
+    <p class="cardmeta" style="margin:6px 0 10px">Your collection lives in this browser only. Copy or download this backup, then paste it on another device (or after clearing your browser) and import.</p>
+    <textarea id="bkText" rows="8" spellcheck="false" aria-label="Collection backup JSON"></textarea>
+    <div class="buy" style="margin-top:10px">
+      <a class="solid" id="bkDownload" download="goodra-collection-backup.json" href="#">Download .json</a>
+      <a href="#" data-act="bkcopy" id="bkCopy">Copy to clipboard</a>
+      <a href="#" data-act="bkmerge">Import (merge)</a>
+      <a href="#" data-act="bkreplace">Import (replace)</a>
+    </div>
+    <div id="bkMsg" class="cardmeta" style="margin-top:8px"></div>
+  </div>
+</dialog>
+
+<script>
+const DATA = __DATA__;
+const $ = s => document.querySelector(s);
+const fmt = n => n==null ? "—" : "$" + (n>=100 ? Math.round(n).toLocaleString() : n.toFixed(2));
+const vid = (c,v) => c.id + ":" + v.key;
+
+let owned = {};
+try { owned = JSON.parse(localStorage.getItem("goodra.owned")||"{}"); } catch(e){}
+// migrate v1 ({id: qty}) to v2 ({id: {q, paid, pdate, cond, graded, gradeCo, grade, cert}})
+Object.keys(owned).forEach(k=>{ if(typeof owned[k]==="number") owned[k]={q:owned[k]}; });
+const save = () => localStorage.setItem("goodra.owned", JSON.stringify(owned));
+const qty = id => owned[id] ? owned[id].q : 0;
+let expandedEditor = null;
+
+/* ---------- species ---------- */
+const SPECIES = DATA.species || [{key:"goodra",label:"Goodra",dex:"#706"}];
+let activeSpecies = localStorage.getItem("tracker.species") || SPECIES[0].key;
+if(!SPECIES.some(s=>s.key===activeSpecies)) activeSpecies = SPECIES[0].key;
+const CARDS = () => DATA.cards.filter(c => (c.species||"goodra") === activeSpecies);
+let allVariants = [];
+function rebuildVariants(){
+  allVariants = [];
+  CARDS().forEach(c => c.variants.forEach(v => allVariants.push({c,v,id:vid(c,v)})));
+}
+rebuildVariants();
+function renderSpecies(){
+  const sp = SPECIES.find(s=>s.key===activeSpecies);
+  $("#eyebrow").innerHTML = "Card Tracker &middot; " + sp.dex;
+  $("#pageTitle").innerHTML = `The <span class="goo">${sp.label}</span> Collection`;
+  $("#pageSub").innerHTML = `Every ${sp.label} printing on the market &mdash; what you own, what it's worth, what's still out there.`;
+  $("#ringLbl").textContent = `of all known ${sp.label} variants collected`;
+  $("#speciesSwitch").innerHTML = SPECIES.length>1 ? SPECIES.map(s=>
+    `<button data-sp="${s.key}" class="${s.key===activeSpecies?"on":""}">${s.label}</button>`).join("") : "";
+}
+
+/* ---------- PSA graded-price estimates ----------
+   Rough multipliers on raw NM market price, by era age. Derived from the grading
+   tables in the user's Dragonite Master Collection Guide + typical market spreads.
+   Clearly labeled estimates — replace with PSA's Auction Prices Realized API when connected. */
+function gradeMultiplier(grade, year){
+  const y = parseInt(year) || 2020;
+  const tier = y <= 2002 ? 0 : y <= 2016 ? 1 : 2;   // vintage / mid / modern
+  if(grade >= 10)  return [15, 5, 3][tier];
+  if(grade >= 9.5) return [8, 3.5, 2.2][tier];      // BGS 9.5 territory
+  if(grade >= 9)   return [4, 2.2, 1.5][tier];
+  if(grade >= 8)   return [2, 1.4, 1.1][tier];
+  return 1;                                          // 7 and under ~ raw NM or less
+}
+function gradedEst(v, grade, year){
+  const raw = v.market ?? estMid(v);
+  return raw==null ? null : raw * gradeMultiplier(grade, year);
+}
+/* value of one owned copy: graded cards use the graded estimate */
+function ownedValue(x){
+  const o = owned[x.id];
+  if(o && o.graded && o.grade) return gradedEst(x.v, o.grade, x.c.date.slice(0,4)) ?? (bestPrice(x.v)||0);
+  return bestPrice(x.v) || 0;
+}
+
+/* market price, falling back to the checklist's estimate midpoint (est-only variants) */
+const estMid = v => (v.estLow!=null && v.estHigh!=null) ? (v.estLow+v.estHigh)/2 : (v.estLow ?? null);
+const bestPrice = v => v.market ?? estMid(v);
+const isEst = v => v.market==null && estMid(v)!=null;
+const priceHtml = v => v.market!=null ? fmt(v.market)
+  : (v.estLow!=null ? `$${v.estLow%1?v.estLow.toFixed(2):v.estLow}${v.estHigh!=null?"&ndash;"+(v.estHigh%1?v.estHigh.toFixed(2):v.estHigh):"+"} <span class="est">est.</span>` : "&mdash;");
+
+/* ---------- priority tiers ---------- */
+let prio = {};
+try { prio = JSON.parse(localStorage.getItem("goodra.prio")||"{}"); } catch(e){}
+const savePrio = () => localStorage.setItem("goodra.prio", JSON.stringify(prio));
+const PRIO_ORDER = ["grail","high","med","low","skip"];
+const PRIO_LABEL = {grail:"⭐ Grail", high:"High", med:"Med", low:"Low", skip:"Skip"};
+function autoTier(v){
+  const p = bestPrice(v);
+  if(v.grail) return "grail";
+  if(p!=null && p>=20) return "high";
+  if(p!=null && p>=5) return "med";
+  return "low";
+}
+const effTier = x => prio[x.id] || autoTier(x.v);
+function cyclePrio(id, v){
+  const cur = prio[id];
+  if(!cur){ prio[id] = PRIO_ORDER[0]; }
+  else { const i = PRIO_ORDER.indexOf(cur); if(i === PRIO_ORDER.length-1) delete prio[id]; else prio[id] = PRIO_ORDER[i+1]; }
+  savePrio();
+}
+const pct = (a,b) => (a==null||b==null||b===0) ? null : (a-b)/b*100;
+const chg = v => ({d7:pct(v.cmAvg1,v.cmAvg7), d30:pct(v.cmAvg1,v.cmAvg30)});
+const tier = v => { const p=bestPrice(v); if(v.grail) return "grail"; if(p!=null&&p>=20) return "chase"; return null; };
+const ebay = (c) => "https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent("pokemon "+c.name+" "+c.set.replace(" (JP)","")+" "+c.number.split("/")[0]);
+const ebaySold = (c) => ebay(c) + "&LH_Complete=1&LH_Sold=1";
+
+/* sparkline: prefers real USD history (>=2 refresh snapshots), falls back to
+   Cardmarket 30d->7d->1d averages (EUR trend). Returns "" if no series. */
+function sparkHtml(v, w=64, h=20){
+  let pts, label;
+  if(v.hist && v.hist.length>=2){
+    pts = v.hist.map(s=>s.p); label = "USD market over "+v.hist.length+" refreshes";
+  } else if(v.cmAvg30!=null && v.cmAvg7!=null && v.cmAvg1!=null){
+    pts = [v.cmAvg30, v.cmAvg7, v.cmAvg1]; label = "Cardmarket trend: 30d avg → 7d → 1d";
+  } else return "";
+  const min = Math.min(...pts), max = Math.max(...pts), span = (max-min)||1;
+  const px = i => 3 + i*(w-6)/(pts.length-1);
+  const py = p => h-4 - (p-min)*(h-8)/span;
+  const path = pts.map((p,i)=>(i?"L":"M")+px(i).toFixed(1)+" "+py(p).toFixed(1)).join(" ");
+  const up = pts[pts.length-1] >= pts[0];
+  const col = up ? "var(--gain)" : "var(--loss)";
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}"><title>${label}</title>
+    <path d="${path}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="${px(pts.length-1).toFixed(1)}" cy="${py(pts[pts.length-1]).toFixed(1)}" r="2.2" fill="${col}"/></svg>`;
+}
+function plHtml(x){
+  const o = owned[x.id], m = bestPrice(x.v);
+  if(!o || !(o.paid>0) || m==null) return "—";
+  const d = (m - o.paid) * qty(x.id);
+  return `<span style="color:${d>=0?"var(--gain)":"var(--loss)"};font-weight:650">${d>=0?"+":"−"}${fmt(Math.abs(d))}</span>`;
+}
+function chipHtml(p){ if(p==null) return '<span class="chip flat">—</span>';
+  const cls = p>0.5 ? "up" : p<-0.5 ? "dn" : "flat";
+  const sign = p>0 ? "▲" : p<0 ? "▼" : "";
+  return `<span class="chip ${cls}">${sign} ${Math.abs(p).toFixed(1)}%</span>`; }
+
+/* ---------- header stats ---------- */
+function refreshHeader(){
+  const total = allVariants.length;
+  const have = allVariants.filter(x=>owned[x.id]).length;
+  const p = Math.round(have/total*100);
+  $("#ring").style.setProperty("--pct", p);
+  $("#ringPct").textContent = p + "%";
+  $("#ringCnt").textContent = have + " / " + total;
+}
+
+/* ---------- collection ---------- */
+let colFilter = "all";
+function renderCollection(){
+  const total = allVariants.length;
+  const haveList = allVariants.filter(x=>owned[x.id]);
+  const missList = allVariants.filter(x=>!owned[x.id]);
+  $("#cOwned").textContent = haveList.length;
+  const qtyTotal = haveList.reduce((s,x)=>s+qty(x.id),0);
+  $("#cOwnedDet").textContent = qtyTotal + (qtyTotal===1?" card":" cards") + " total incl. duplicates";
+  $("#cMissing").textContent = missList.length;
+  $("#cCost").textContent = fmt(missList.reduce((s,x)=>s+(bestPrice(x.v)||0),0));
+  $("#progBar").style.width = (haveList.length/total*100) + "%";
+
+  const q = ($("#colSearch").value||"").trim().toLowerCase();
+  const passes = x => {
+    if(colFilter==="owned" && !owned[x.id]) return false;
+    if(colFilter==="missing" && owned[x.id]) return false;
+    if(colFilter==="en" && x.c.lang!=="EN") return false;
+    if(colFilter==="jp" && x.c.lang!=="JP") return false;
+    return !q || (x.c.name+" "+x.c.set+" "+x.c.rarity+" "+x.v.label).toLowerCase().includes(q);
+  };
+  const sort = $("#colSort").value;
+  let html = "";
+  if(sort==="era"){
+    const eras = [...new Set(CARDS().map(c=>c.era))];
+    eras.forEach(era=>{
+      const items = allVariants.filter(x=>x.c.era===era && passes(x));
+      if(!items.length) return;
+      const haveN = allVariants.filter(x=>x.c.era===era&&owned[x.id]).length;
+      const totN = allVariants.filter(x=>x.c.era===era).length;
+      html += `<div class="era"><h2>${era}</h2><span class="cnt num">${haveN}/${totN} collected</span></div>`;
+      items.forEach(x=>{ html += rowHtml(x); });
+    });
+  } else {
+    const items = allVariants.filter(passes);
+    const key = {valdesc:(a,b)=>(bestPrice(b.v)||0)-(bestPrice(a.v)||0),
+                 valasc:(a,b)=>(bestPrice(a.v)||Infinity)-(bestPrice(b.v)||Infinity),
+                 new:(a,b)=>b.c.date.localeCompare(a.c.date),
+                 name:(a,b)=>(a.c.name+a.v.label).localeCompare(b.c.name+b.v.label)}[sort];
+    items.sort(key);
+    items.forEach(x=>{ html += rowHtml(x); });
+  }
+  $("#colList").innerHTML = html || '<p class="sub">Nothing matches this filter or search.</p>';
+  renderPlanner(); renderBadges();
+}
+
+function rowHtml(x){
+  const {c,v} = x; const isOwn = !!owned[x.id]; const t = tier(v);
+  const img = c.img ? `<img class="thumb" src="${c.img}" alt="${c.name}" data-card="${c.id}" title="View details">` : `<div class="thumb ph" data-card="${c.id}" title="View details">🐉</div>`;
+  const badges = (c.lang==="JP"?`<span class="badge jp">JP${c.jpExclusive?" ONLY":""}</span>`:"")
+    + (t==="grail"?`<span class="badge grail">⭐ GRAIL</span>`:t==="chase"?`<span class="badge chase">CHASE</span>`:"");
+  const qtyCtl = isOwn ? `<span class="qty side"><button data-q="-1" data-id="${x.id}">−</button><span class="num">×${qty(x.id)}</span><button data-q="1" data-id="${x.id}">+</button></span>` : "";
+  const note = v.note||c.promoNote ? `<div class="cardmeta">${v.note||c.promoNote}</div>` : "";
+  const o = owned[x.id];
+  const plChip = (o&&o.paid>0&&bestPrice(v)!=null) ? chipHtml((bestPrice(v)-o.paid)/o.paid*100) : "";
+  let html = `<div class="row ${isOwn?"owned":""}">
+    <button class="ownbtn ${isOwn?"on":""}" data-own="${x.id}" aria-label="toggle owned">✓</button>
+    ${img}
+    <div><div class="cardname">${c.name} · ${v.label}${badges}${gradeBadge(o)}</div>
+    <div class="cardmeta">${c.set} · #${c.number} · ${c.rarity} · ${c.date.slice(0,4)}</div>${note}</div>
+    <div class="price num">${priceHtml(v)}${(o&&o.graded&&o.grade&&bestPrice(v)!=null)?`<small>${o.gradeCo||"graded"} ${o.grade} est. ${fmt(gradedEst(v,o.grade,c.date.slice(0,4)))}</small>`:""}${plChip?`<small>paid ${fmt(o.paid)} ${plChip}</small>`:((v.low!=null&&v.market!=null&&v.low<v.market)?`<small>deal &lt; ${fmt(v.low)}</small>`:"")}</div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end" class="side">
+      ${qtyCtl}${isOwn?`<button class="editbtn ${expandedEditor===x.id?"on":""}" data-ed="${x.id}">${expandedEditor===x.id?"close":"details"}</button>`:
+        `<button class="priobtn pr-${effTier(x)}" data-pr="${x.id}" title="Hunt priority — click to change">${prio[x.id]?"":"auto · "}${PRIO_LABEL[effTier(x)]}</button>
+         <a class="findlink" target="_blank" rel="noopener" href="${c.tcgUrl||ebay(c)}">Find it ↗</a>`}
+    </div></div>`;
+  if(isOwn && expandedEditor===x.id) html += editorHtml(x);
+  return html;
+}
+
+const CONDS = ["","NM","LP","MP","HP","DMG"];
+const GRADECOS = ["","PSA","BGS","CGC","SGC"];
+function editorHtml(x){
+  const o = owned[x.id]||{};
+  const sel = (field, opts, cur, lbl) => `<label>${lbl}<select data-field="${field}" data-id="${x.id}">` +
+    opts.map(op=>`<option value="${op}" ${op===(cur||"")?"selected":""}>${op||"—"}</option>`).join("") + `</select></label>`;
+  const gradeBits = o.graded ? `
+    ${sel("gradeCo", GRADECOS, o.gradeCo, "Company")}
+    <label>Grade<input type="number" min="1" max="10" step="0.5" data-field="grade" data-id="${x.id}" value="${o.grade??""}" placeholder="9.5"></label>
+    <label>Cert #<input type="text" data-field="cert" data-id="${x.id}" value="${o.cert||""}" placeholder="12345678"></label>` : "";
+  return `<div class="editor" data-editor="${x.id}">
+    <label>Paid ($)<input type="number" min="0" step="0.01" data-field="paid" data-id="${x.id}" value="${o.paid??""}" placeholder="12.50"></label>
+    <label>Purchase date<input type="date" data-field="pdate" data-id="${x.id}" value="${o.pdate||""}"></label>
+    ${o.graded ? "" : sel("cond", CONDS, o.cond, "Condition")}
+    <label class="ck">Graded?<input type="checkbox" data-field="graded" data-id="${x.id}" ${o.graded?"checked":""}></label>
+    ${gradeBits}
+  </div>`;
+}
+function gradeBadge(o){
+  if(!o) return "";
+  if(o.graded && o.grade) return `<span class="badge gr">${o.gradeCo||"GRADED"} ${o.grade}</span>`;
+  if(o.graded) return `<span class="badge gr">GRADED</span>`;
+  if(o.cond) return `<span class="badge cond">${o.cond}</span>`;
+  return "";
+}
+
+/* ---------- milestones ---------- */
+function renderBadges(){
+  const haveIds = allVariants.filter(x=>owned[x.id]);
+  const pctDone = haveIds.length/allVariants.length*100;
+  const eras = [...new Set(CARDS().map(c=>c.era))];
+  const eraDone = eras.filter(era=>{
+    const evs = allVariants.filter(x=>x.c.era===era);
+    return evs.length && evs.every(x=>owned[x.id]);
+  });
+  const badges = [
+    {ico:"🥚", label:"First slime", hint:"own your first card", got:haveIds.length>=1},
+    {ico:"🐌", label:"Goomy grade", hint:"25% collected", got:pctDone>=25},
+    {ico:"🐛", label:"Sliggoo status", hint:"50% collected", got:pctDone>=50},
+    {ico:"🐲", label:"Goodra tier", hint:"75% collected", got:pctDone>=75},
+    {ico:"👑", label:"Living dex", hint:"every variant collected", got:pctDone>=100},
+    {ico:"⭐", label:"Grail hunter", hint:"own a grail-tier card", got:haveIds.some(x=>effTier(x)==="grail"||tier(x.v)==="grail")},
+    {ico:"💎", label:"Slabbed", hint:"own a graded card", got:haveIds.some(x=>owned[x.id].graded)},
+    {ico:"🔁", label:"Trader", hint:"first duplicate in the binder", got:haveIds.some(x=>qty(x.id)>=2)},
+    {ico:"🗾", label:"Import license", hint:"own a Japanese printing", got:haveIds.some(x=>x.c.lang==="JP")},
+    ...eras.map(era=>({ico:"🏅", label:era.replace(/ Era.*/,"")+" complete", hint:"finish "+era, got:eraDone.includes(era)})),
+  ];
+  $("#badges").innerHTML = badges.map(b=>
+    `<span class="mbadge ${b.got?"earned":""}" title="${b.hint}"><span class="ico">${b.ico}</span>${b.label}</span>`).join("");
+}
+
+/* ---------- budget planner ---------- */
+function renderPlanner(){
+  const bIn = $("#budgetIn");
+  if(document.activeElement !== bIn) bIn.value = localStorage.getItem("goodra.budget") || "";
+  const budget = parseFloat(bIn.value);
+  const missing = allVariants.filter(x=>!owned[x.id] && effTier(x)!=="skip" && bestPrice(x.v)!=null);
+  const rank = t => PRIO_ORDER.indexOf(t);
+  missing.sort((a,b)=> rank(effTier(a))-rank(effTier(b)) || bestPrice(a.v)-bestPrice(b.v));
+  let picks = missing, spent = missing.reduce((s,x)=>s+bestPrice(x.v),0), note = "";
+  if(budget > 0){
+    picks = []; spent = 0;
+    for(const x of missing){ const p = bestPrice(x.v); if(spent + p <= budget){ picks.push(x); spent += p; } }
+    note = `covers ${picks.length} of ${missing.length} priced missing cards`;
+  } else {
+    picks = missing.slice(0,5);
+    note = "top 5 by priority — set a budget to plan a haul";
+    spent = picks.reduce((s,x)=>s+bestPrice(x.v),0);
+  }
+  $("#planList").innerHTML = (picks.length ? picks.map(x=>
+    `<div class="plan-item"><span><span class="priobtn pr-${effTier(x)}" style="margin-right:8px">${PRIO_LABEL[effTier(x)]}</span>${x.c.name} · ${x.v.label} <span style="color:var(--ink3)">(${x.c.set})</span></span>
+     <span class="num" style="font-weight:650">${fmt(bestPrice(x.v))}</span></div>`).join("")
+    : '<div class="plan-item">Nothing to plan — every priced card is collected (or skipped).</div>')
+    + `<div class="plan-item" style="border-top:2px solid var(--line);font-weight:700"><span>Total${note?` <span style="font-weight:400;color:var(--ink3)">· ${note}</span>`:""}</span><span class="num">${fmt(spent)}</span></div>`;
+}
+
+/* ---------- market ---------- */
+function renderMarket(){
+  const priced = allVariants.filter(x=>bestPrice(x.v)!=null);
+  const ownedList = allVariants.filter(x=>owned[x.id]);
+  const port = ownedList.reduce((s,x)=>s+ownedValue(x)*qty(x.id),0);
+  $("#mPort").textContent = fmt(port);
+  // portfolio 7d trend from cardmarket averages of owned cards
+  let now=0, prev=0;
+  ownedList.forEach(x=>{ if(x.v.cmAvg1!=null&&x.v.cmAvg7!=null){ now+=x.v.cmAvg1*qty(x.id); prev+=x.v.cmAvg7*qty(x.id); }});
+  const pchg = pct(now,prev);
+  const pspark = portHist.length>=2 ? sparkHtml({hist:portHist}, 64, 18)+" " : "";
+  $("#mPortChg").innerHTML = pspark + (pchg==null ? "mark cards owned to track your goo stock" : chipHtml(pchg)+" vs 7-day average");
+  $("#mTotal").textContent = fmt(priced.reduce((s,x)=>s+bestPrice(x.v),0));
+  // cost basis + unrealized P/L (cards with a recorded purchase price)
+  const withPaid = ownedList.filter(x=>owned[x.id].paid>0);
+  const basis = withPaid.reduce((s,x)=>s+owned[x.id].paid*qty(x.id),0);
+  const curOfPaid = withPaid.reduce((s,x)=>s+ownedValue(x)*qty(x.id),0);
+  $("#mBasis").textContent = fmt(basis||null) === "—" ? "$0" : fmt(basis);
+  $("#mBasisDet").textContent = withPaid.length ? `${withPaid.length} of ${ownedList.length} owned variants have a paid price` : "add paid prices via row details";
+  const pl = curOfPaid - basis;
+  $("#mPL").innerHTML = (pl<0?"−":"")+fmt(Math.abs(pl));
+  $("#mPL").style.color = basis ? (pl>=0?"var(--gain)":"var(--loss)") : "";
+  $("#mPLDet").innerHTML = basis ? chipHtml(pl/basis*100)+" on cards with a paid price" : "unrealized gain/loss appears here";
+
+  const movers = priced.map(x=>({...x,c7:chg(x.v).d7})).filter(x=>x.c7!=null);
+  movers.sort((a,b)=>b.c7-a.c7);
+  if(movers.length){
+    const g=movers[0], l=movers[movers.length-1];
+    $("#mGain").textContent = g.c.name+" ("+g.c.set+")";
+    $("#mGainDet").innerHTML = chipHtml(g.c7)+" "+g.v.label;
+    $("#mLoss").textContent = l.c.name+" ("+l.c.set+")";
+    $("#mLossDet").innerHTML = chipHtml(l.c7)+" "+l.v.label;
+  }
+
+  // bars
+  const sorted = [...priced].sort((a,b)=>bestPrice(b.v)-bestPrice(a.v)).slice(0,15);
+  const max = bestPrice(sorted[0].v);
+  $("#valueBars").innerHTML = sorted.map(x=>
+    `<div class="bar ${owned[x.id]?"own":""}"><span class="n">${x.c.name} · ${x.c.set} · ${x.v.label}</span>
+     <div><div class="t" style="width:${Math.max(2,bestPrice(x.v)/max*100)}%"></div></div>
+     <span class="v num">${fmt(bestPrice(x.v))}</span></div>`).join("");
+
+  // deal watch: missing variants with a listed low meaningfully under market
+  const deals = allVariants
+    .filter(x=>!owned[x.id] && x.v.low!=null && bestPrice(x.v)!=null && bestPrice(x.v)>=1)
+    .map(x=>({...x, spread:(bestPrice(x.v)-x.v.low)/bestPrice(x.v)*100}))
+    .filter(x=>x.spread>0)
+    .sort((a,b)=>b.spread-a.spread)
+    .slice(0,8);
+  $("#dealList").innerHTML = deals.length ? deals.map(x=>{
+    const hot = x.spread>=35;
+    return `<div class="deal-item">
+      <span>${hot?'<span class="chip up" style="margin-right:6px">DEAL</span>':""}${x.c.name} · ${x.v.label} <span style="color:var(--ink3)">(${x.c.set})</span></span>
+      <span class="num" style="text-align:right;white-space:nowrap">low <b>${fmt(x.v.low)}</b> vs market ${fmt(bestPrice(x.v))} <span class="chip ${hot?"up":"flat"}">−${x.spread.toFixed(0)}%</span>
+        <a target="_blank" rel="noopener" href="${x.c.tcgUrl||ebay(x.c)}">buy ↗</a> · <a target="_blank" rel="noopener" href="${ebaySold(x.c)}">sold comps ↗</a></span>
+    </div>`;
+  }).join("") : '<div class="cardmeta">No spreads to show — either everything is collected or lows are missing.</div>';
+
+  // table
+  const rows = [...allVariants].sort((a,b)=>(bestPrice(b.v)||0)-(bestPrice(a.v)||0));
+  $("#mRows").innerHTML = rows.map(x=>{
+    const ch = chg(x.v);
+    return `<tr><td>${owned[x.id]?'<span class="ownd" title="owned">✓</span>':""}</td>
+      <td>${x.c.name}<br><small style="color:var(--ink3)">${x.c.set} #${x.c.number}</small></td>
+      <td>${x.v.label}</td><td class="r num" style="font-weight:650">${priceHtml(x.v)}</td>
+      <td class="r num">${plHtml(x)}</td>
+      <td class="r">${sparkHtml(x.v)||'<span style="color:var(--ink3)">—</span>'}</td>
+      <td class="r">${chipHtml(ch.d7)}</td><td class="r">${chipHtml(ch.d30)}</td>
+      <td class="r"><a target="_blank" rel="noopener" href="${x.c.tcgUrl||ebay(x.c)}">${x.c.tcgUrl?"TCGplayer":"eBay"} ↗</a></td></tr>`;
+  }).join("");
+}
+
+/* ---------- showcase ---------- */
+function renderShowcase(){
+  const q = ($("#scSearch").value||"").trim().toLowerCase();
+  const scPass = c => !q || (c.name+" "+c.set+" "+c.rarity).toLowerCase().includes(q);
+  const eras = [...new Set(CARDS().map(c=>c.era))];
+  $("#galWrap").innerHTML = eras.map(era=>{
+    const cards = CARDS().filter(c=>c.era===era && scPass(c));
+    if(!cards.length) return "";
+    return `<div class="era"><h2>${era}</h2><span class="cnt">${cards.length} cards</span></div>
+    <div class="gallery">` + cards.map(c=>{
+      const haveAll = c.variants.every(v=>owned[vid(c,v)]);
+      const haveSome = c.variants.some(v=>owned[vid(c,v)]);
+      const top = Math.max(...c.variants.map(v=>bestPrice(v)||0));
+      const art = c.img ? `<img src="${c.img}" alt="${c.name} ${c.set}" loading="lazy">`
+        : `<div class="ph">${c.name}<br>${c.set}<br>#${c.number}</div>`;
+      return `<div class="gcard" data-card="${c.id}">
+        ${haveSome?`<span class="owntag">${haveAll?"COMPLETE":"PARTIAL"}</span>`:""}
+        ${art}<div class="gn">${c.name}${c.lang==="JP"?' <span class="badge jp">JP</span>':""}</div>
+        <div class="gm">${c.set} · #${c.number} · ${c.rarity}</div>
+        <div class="gm num">${top?("up to "+fmt(top)):"price TBD"}</div>
+        <div class="vchips">${c.variants.map(v=>`<span class="vchip ${owned[vid(c,v)]?"have":""}">${v.label}</span>`).join("")}</div>
+      </div>`;
+    }).join("") + `</div>`;
+  }).join("");
+}
+
+/* ---------- trade binder ---------- */
+function renderBinder(){
+  const spares = allVariants.filter(x=>qty(x.id)>=2).map(x=>({...x, spare:qty(x.id)-1}));
+  const totVal = spares.reduce((s,x)=>s+(bestPrice(x.v)||0)*x.spare,0);
+  $("#bCount").textContent = spares.reduce((s,x)=>s+x.spare,0);
+  $("#bValue").textContent = fmt(totVal||0) === "—" ? "$0" : fmt(totVal);
+  $("#bList").innerHTML = spares.length ? spares.map(x=>{
+    const img = x.c.img ? `<img class="thumb" src="${x.c.img}" alt="${x.c.name}" data-card="${x.c.id}" title="View details">` : `<div class="thumb ph" data-card="${x.c.id}" title="View details">🐉</div>`;
+    return `<div class="row">
+      <div class="num" style="font-weight:700;color:var(--accent-ink);min-width:34px;text-align:center">×${x.spare}</div>
+      ${img}
+      <div><div class="cardname">${x.c.name} · ${x.v.label}</div>
+      <div class="cardmeta">${x.c.set} · #${x.c.number} · you own ${qty(x.id)}, keeping 1</div></div>
+      <div class="price num">${fmt(bestPrice(x.v))}<small>each</small></div>
+      <div class="price num">${fmt((bestPrice(x.v)||0)*x.spare)}<small>spare value</small></div>
+    </div>`;
+  }).join("") : '<p class="sub">No duplicates yet — when a variant\'s quantity hits 2+, the extras show up here automatically.</p>';
+}
+
+/* ---------- modal ---------- */
+function openModal(id){
+  const c = DATA.cards.find(x=>x.id===id); if(!c) return;
+  const art = c.img ? `<img src="${c.img}" alt="">` : `<div class="ph" style="aspect-ratio:245/342;border-radius:10px;background:linear-gradient(160deg,var(--accent-soft),var(--surface2));display:grid;place-items:center;color:var(--accent-ink);font-weight:700;text-align:center">${c.name}<br>#${c.number}</div>`;
+  $("#mContent").innerHTML = `<div class="mbody">${art}<div>
+    <h3 class="disp" style="margin:0 0 2px">${c.name}</h3>
+    <div class="cardmeta">${c.set} · #${c.number} · ${c.rarity} · ${c.date.slice(0,4)} · ${c.lang}</div>
+    ${c.promoNote?`<div class="mnote">${c.promoNote}</div>`:""}
+    <div style="margin-top:12px">` + c.variants.map(v=>{
+      const ch=chg(v);
+      return `<div class="mvar"><span>${v.label}${v.grail?' <span class="badge grail">⭐ GRAIL</span>':""}${owned[vid(c,v)]?' <span class="badge" style="background:var(--own-soft);color:var(--own)">OWNED ×'+qty(vid(c,v))+"</span>"+gradeBadge(owned[vid(c,v)]):""}</span>
+        <span class="num" style="text-align:right">${sparkHtml(v,72,20)} ${priceHtml(v)} ${ch.d7!=null?chipHtml(ch.d7):""}<br><small style="color:var(--ink3)">${v.low!=null?("low "+fmt(v.low)+" · high "+fmt(v.high)):(v.note||(isEst(v)?"estimate from your checklist":"no market data yet"))}${bestPrice(v)!=null?`<br>graded est.: PSA 10 ≈ ${fmt(gradedEst(v,10,c.date.slice(0,4)))} · PSA 9 ≈ ${fmt(gradedEst(v,9,c.date.slice(0,4)))}`:""}</small></span></div>`;
+    }).join("") + `</div>
+    <div class="buy">${c.tcgUrl?`<a class="solid" target="_blank" rel="noopener" href="${c.tcgUrl}">Buy on TCGplayer</a>`:""}
+      <a ${c.tcgUrl?"":'class="solid"'} target="_blank" rel="noopener" href="${ebay(c)}">Search eBay</a></div>
+  </div></div>`;
+  $("#modal").showModal();
+}
+
+/* ---------- backup / restore ---------- */
+function exportPayload(){
+  return JSON.stringify({app:"goodra-tracker", v:2, exported:new Date().toISOString().slice(0,10), owned}, null, 1);
+}
+function validateOwned(obj){
+  if(typeof obj!=="object"||obj===null||Array.isArray(obj)) return null;
+  const clean = {};
+  for(const [k,val] of Object.entries(obj)){
+    if(typeof k!=="string") return null;
+    let o = val;
+    if(typeof o==="number") o = {q:o}; // accept v1 backups
+    if(typeof o!=="object"||o===null) return null;
+    const q = parseInt(o.q);
+    if(!(q>=1)) return null;
+    clean[k] = {q, paid:(o.paid>0?+o.paid:null), pdate:o.pdate||null, cond:o.cond||null,
+      graded:!!o.graded||null, gradeCo:o.gradeCo||null, grade:(o.grade>0?+o.grade:null), cert:o.cert||null};
+  }
+  return clean;
+}
+function openBackup(){
+  const payload = exportPayload();
+  $("#bkText").value = payload;
+  $("#bkDownload").href = "data:application/json;charset=utf-8," + encodeURIComponent(payload);
+  $("#bkMsg").textContent = ""; $("#bkMsg").className = "cardmeta";
+  $("#bkModal").showModal();
+}
+function bkMsg(text, ok){ const el=$("#bkMsg"); el.innerHTML=text; el.className="cardmeta "+(ok?"ok":"err"); }
+function doImport(mode){
+  let parsed;
+  try { parsed = JSON.parse($("#bkText").value); }
+  catch(e){ return bkMsg("That isn't valid JSON — paste the full backup text.", false); }
+  const map = validateOwned(parsed.owned !== undefined ? parsed.owned : parsed);
+  if(map===null) return bkMsg("Backup format not recognized — expected the exported goodra-tracker JSON.", false);
+  const n = Object.keys(map).length;
+  if(mode==="replace") owned = map;
+  else Object.assign(owned, map);
+  save(); refreshHeader(); renderCollection();
+  bkMsg((mode==="replace"?"Replaced collection with ":"Merged in ")+n+" variant"+(n===1?"":"s")+". Saved.", true);
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e=>{
+  const t = e.target.closest("[data-tab],[data-own],[data-q],[data-f],[data-card],[data-ed],[data-act],[data-pr],[data-sp]");
+  if(!t) return;
+  if(t.dataset.act){
+    const a = t.dataset.act;
+    if(a!=="backup") e.preventDefault();
+    if(a==="backup") openBackup();
+    else if(a==="bkcopy"){ navigator.clipboard.writeText($("#bkText").value).then(()=>bkMsg("Copied to clipboard.",true), ()=>bkMsg("Copy failed — select the text and copy manually.",false)); }
+    else if(a==="dismissnew"){ localStorage.setItem("goodra.lastSeen", DATA.cards.reduce((m,c)=>c.added>m?c.added:m,"")); $("#newBanner").hidden = true; }
+    else if(a==="bkmerge") doImport("merge");
+    else if(a==="bkreplace"){ if(confirm("Replace your entire collection with this backup? This overwrites what's currently saved here.")) doImport("replace"); }
+    return;
+  }
+  if(t.dataset.tab){
+    document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b===t));
+    ["collection","market","showcase","binder"].forEach(s=>$("#"+s).hidden = s!==t.dataset.tab);
+    if(t.dataset.tab==="collection") renderCollection();
+    if(t.dataset.tab==="market") renderMarket();
+    if(t.dataset.tab==="showcase") renderShowcase();
+    if(t.dataset.tab==="binder") renderBinder();
+  } else if(t.dataset.own){
+    const id = t.dataset.own;
+    if(owned[id]){ delete owned[id]; if(expandedEditor===id) expandedEditor=null; }
+    else owned[id] = {q:1};
+    save(); refreshHeader(); renderCollection();
+  } else if(t.dataset.q){
+    const id=t.dataset.id; owned[id].q = Math.max(1, owned[id].q + parseInt(t.dataset.q));
+    save(); renderCollection();
+  } else if(t.dataset.sp){
+    activeSpecies = t.dataset.sp;
+    localStorage.setItem("tracker.species", activeSpecies);
+    expandedEditor = null;
+    rebuildVariants(); portHist = recordPortfolio(); renderSpecies(); refreshHeader();
+    const visible = ["collection","market","showcase","binder"].find(s=>!$("#"+s).hidden);
+    ({collection:renderCollection, market:renderMarket, showcase:renderShowcase, binder:renderBinder})[visible]();
+  } else if(t.dataset.pr){
+    cyclePrio(t.dataset.pr);
+    renderCollection();
+  } else if(t.dataset.ed){
+    expandedEditor = expandedEditor===t.dataset.ed ? null : t.dataset.ed;
+    renderCollection();
+  } else if(t.dataset.f){
+    colFilter=t.dataset.f;
+    document.querySelectorAll("#colFilters button").forEach(b=>b.classList.toggle("on",b===t));
+    renderCollection();
+  } else if(t.dataset.card){ openModal(t.dataset.card); }
+});
+document.addEventListener("input", e=>{
+  const t = e.target;
+  if(!t.dataset || !t.dataset.field) return;
+  const o = owned[t.dataset.id]; if(!o) return;
+  const f = t.dataset.field;
+  if(f==="paid"){ const n=parseFloat(t.value); o.paid = isNaN(n)?null:n; }
+  else if(f==="grade"){ const n=parseFloat(t.value); o.grade = isNaN(n)?null:n; }
+  else if(f==="graded"){ o.graded = t.checked || null; }
+  else o[f] = t.value || null;
+  save();
+  // graded toggle changes which editor fields exist; selects don't hold focus mid-typing
+  if(f==="graded" || t.tagName==="SELECT") renderCollection();
+  else refreshHeader(); // keep focus while typing in text/number fields
+});
+$("#budgetIn") && document.addEventListener("input", e=>{
+  if(e.target.id==="budgetIn"){ localStorage.setItem("goodra.budget", e.target.value); renderPlanner(); }
+  else if(e.target.id==="colSearch") renderCollection();
+  else if(e.target.id==="scSearch") renderShowcase();
+});
+$("#colSort").addEventListener("change", renderCollection);
+$("#mCloseBtn").addEventListener("click",()=>$("#modal").close());
+$("#modal").addEventListener("click",e=>{ if(e.target===$("#modal")) $("#modal").close(); });
+$("#bkCloseBtn").addEventListener("click",()=>$("#bkModal").close());
+$("#bkModal").addEventListener("click",e=>{ if(e.target===$("#bkModal")) $("#bkModal").close(); });
+
+/* ---------- portfolio history (one point per visit-day) ---------- */
+function recordPortfolio(){
+  const key = "tracker.porthist." + activeSpecies;
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem(key) || (activeSpecies==="goodra" ? localStorage.getItem("goodra.porthist") : null) || "[]"); } catch(e){}
+  const today = new Date().toISOString().slice(0,10);
+  const val = +allVariants.filter(x=>owned[x.id]).reduce((s,x)=>s+ownedValue(x)*qty(x.id),0).toFixed(2);
+  const last = hist[hist.length-1];
+  if(last && last.d===today) last.p = val; else hist.push({d:today, p:val});
+  if(hist.length>120) hist = hist.slice(-120);
+  localStorage.setItem(key, JSON.stringify(hist));
+  return hist;
+}
+let portHist = recordPortfolio();
+
+/* ---------- new-release watch ---------- */
+function checkNewCards(){
+  const lastSeen = localStorage.getItem("goodra.lastSeen");
+  const maxAdded = DATA.cards.reduce((m,c)=>c.added>m?c.added:m, "");
+  if(!lastSeen){ localStorage.setItem("goodra.lastSeen", maxAdded); return; } // first visit: baseline quietly
+  const fresh = DATA.cards.filter(c=>c.added>lastSeen);
+  if(!fresh.length) return;
+  const names = fresh.slice(0,4).map(c=>`${c.name} (${c.set} #${c.number})`).join(", ");
+  const extra = fresh.length>4 ? ` and ${fresh.length-4} more` : "";
+  $("#newList").textContent = `${names}${extra} ${fresh.length===1?"was":"were"} added in the latest price refresh.`;
+  $("#newBanner").hidden = false;
+}
+checkNewCards();
+
+renderSpecies(); refreshHeader(); renderCollection();
+</script>
